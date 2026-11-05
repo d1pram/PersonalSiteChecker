@@ -1,14 +1,19 @@
 import asyncio
 import os
 import logging
-from handlers import dp
-
-from aiogram import Bot
 from dotenv import load_dotenv
+
+from aiogram import Bot, Dispatcher
+
+from handlers.commands.basic_handlers import basic_router
+from handlers.commands.create_monitor import create_monitor_form_router
 
 async def main():
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
+
+    dp = Dispatcher()
+    dp.include_routers(basic_router, create_monitor_form_router)
 
     bot = Bot(token=os.environ["TOKEN"])
 
