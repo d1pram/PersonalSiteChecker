@@ -20,7 +20,7 @@ class MonitorStates(StatesGroup):
 
 
 @create_monitor_form_router.message(Command("create_monitor"))
-async def command_start(message: Message, state: FSMContext) :
+async def create_monitor_command(message: Message, state: FSMContext) :
     await state.set_state(MonitorStates.name)
     await message.answer(
         "Hi there! So how should this monitor be called?",
@@ -31,7 +31,7 @@ async def command_start(message: Message, state: FSMContext) :
 async def process_name(message: Message, state: FSMContext) :
     await state.update_data(name=message.text)
     await state.set_state(MonitorStates.url)
-    await message.answer("Okay good, now you can type your URL:\n|| Include http:// or https:// ||")
+    await message.answer("Okay good, now you can type your URL:\n|| Include http:// or https:// ||", parse_mode="MarkdownV2")
 
 
 @create_monitor_form_router.message(MonitorStates.url)
@@ -40,7 +40,7 @@ async def process_url(message: Message, state: FSMContext):
         async with aiohttp.ClientSession() as session:
             async with session.get(message.text) as response:
                 response.raise_for_status()
-    except (aiohttp.ClientConnectionError, asyncio.TimeoutError) as err:
+    except (aiohttp.ClientConnectionError, asyncio.TimeoutError, aiohttp.client_exceptions) as err:
         logging.error(err)
         await message.reply("Something went wrong :( Try again.")
         await asyncio.sleep(1.5)
@@ -60,7 +60,7 @@ async def process_url(message: Message, state: FSMContext):
     await message.answer("The URL is good, now tell me what you want to track", reply_markup=keyboard_builder.as_markup())
 
 
-@create_monitor_form_router.callback_query(state=MonitorStates.purpose)
+@create_monitor_form_router.callback_query(MonitorStates.purpose)
 async def page_changes(state: FSMContext, query: CallbackQuery):
     await state.update_data(purpose=query.data)
 
