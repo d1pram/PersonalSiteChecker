@@ -7,9 +7,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
 from aiogram.filters import Command
-from aiogram.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, \
-    InlineKeyboardMarkup, CallbackQuery
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
+
+
+from keybords import create_url_state_keyboard
 
 create_monitor_form_router = Router()
 
@@ -27,15 +28,21 @@ async def create_monitor_command(message: Message, state: FSMContext) :
         reply_markup=ReplyKeyboardRemove(),
     )
 
-@create_monitor_form_router.message(MonitorStates.name)
+@create_monitor_form_router.message(MonitorStates.name, F.text)
 async def process_name(message: Message, state: FSMContext) :
     await state.update_data(name=message.text)
     await state.set_state(MonitorStates.url)
-    await message.answer("Okay good, now you can type your URL:\n|| Include http:// or https:// ||", parse_mode="MarkdownV2")
+    await message.reply("Okay good, now you can type your URL:\n|| Include http:// or https:// ||", parse_mode="MarkdownV2")
 
 
-@create_monitor_form_router.message(MonitorStates.url)
+@create_monitor_form_router.message(MonitorStates.url, F.text)
 async def process_url(message: Message, state: FSMContext):
+    url = message.text.strip()
+
+    if not url.startswith(("http://", "https://")):
+        await message.reply("Invalid URL. Try again with https:// or http://")
+        return
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(message.text) as response:
@@ -43,25 +50,16 @@ async def process_url(message: Message, state: FSMContext):
     except (aiohttp.ClientConnectionError, asyncio.TimeoutError, aiohttp.client_exceptions) as err:
         logging.error(err)
         await message.reply("Something went wrong :( Try again.")
-        await asyncio.sleep(1.5)
-        await state.set_state(MonitorStates.url)
+        return
 
 
-    keyboard_builder = InlineKeyboardBuilder().adjust(1,3)
-
-    keyboard_builder.row(
-        InlineKeyboardButton(text="Open my page", url=message.text),
-        InlineKeyboardButton(text="Number check", callback_data="number_check"),
-        InlineKeyboardButton(text="Changes in page", callback_data="page_changes"),
-    )
-
-    await state.update_data(url=message.text)
+    await state.update_data(url=url)
     await state.set_state(MonitorStates.purpose)
-    await message.answer("The URL is good, now tell me what you want to track", reply_markup=keyboard_builder.as_markup())
+    await message.answer("The URL is good, now tell me what you want to track", reply_markup=create_url_state_keyboard(url))
 
 
 @create_monitor_form_router.callback_query(MonitorStates.purpose)
-async def page_changes(state: FSMContext, query: CallbackQuery):
+async def page_changes(query: CallbackQuery, state: FSMContext):
     await state.update_data(purpose=query.data)
 
     if query.data == "number_check":
@@ -69,4 +67,14 @@ async def page_changes(state: FSMContext, query: CallbackQuery):
     elif query.data == "page_changes":
         await query.answer(show_alert=True, text="Changes in page mode is set.\nTo see more details do «/help Changes in page»")
 
+
+    await query.message.edit_text(f"Changes in page mode is set to {query.data}\n"
+                                  f"Now your monitor is ready to go! Check your monitors on /monitors")
+
+
+    #Should create a Monitor object and store it somehow
+
+
+
+    # await state.clear()
 
