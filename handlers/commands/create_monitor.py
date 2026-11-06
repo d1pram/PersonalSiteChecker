@@ -62,7 +62,7 @@ async def process_url(message: Message, state: FSMContext):
 
 @create_monitor_form_router.callback_query(state=MonitorStates.purpose)
 async def page_changes(state: FSMContext, query: CallbackQuery):
-    await state.update_data(query.data)
+    await state.update_data(purpose=query.data)
 
     if query.data == "number_check":
         await query.answer(show_alert=True, text="Number check mode is set.\nTo see more details do «/help Number check»")

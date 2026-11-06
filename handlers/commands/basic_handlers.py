@@ -21,13 +21,18 @@ async def monitor_command(message: Message):
     # await message.answer("Type the URL below:")
     # await message.answer(message.text)
 
-    htmp_page = await parser.parse(message.text.split()[1])
-    if htmp_page is None:
-        await message.reply("Sorry, I don't know how to handle that yet. Check your URL once more..")
+    parts = (message.text or "").split(maxsplit=1)
+
+    if len(parts) < 2:
+        await message.reply("Choose the adress: /monitor https://example.com")
+        return
+
+    html_page = await parser.parse(parts[1])
+
+    if html_page is None:
+        await message.reply("Can't load page. Check the address.")
     else:
-
-        await message.answer_document(htmp_page)
-
+        await message.answer_document(html_page)
 
 @basic_router.message()
 async def echo (message: Message):
