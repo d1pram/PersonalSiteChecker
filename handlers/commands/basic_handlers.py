@@ -34,7 +34,7 @@ async def monitor_command(message: Message):
     else:
         await message.answer_document(html_page)
 
-@basic_router.message()
-async def echo (message: Message):
-    # await message.reply("I don't know how to handle that yet. Try /help.")
-    await message.react([ReactionTypeEmoji(emoji="🔥", type='emoji')], True)
+# @basic_router.message()
+# async def echo (message: Message):
+#     # await message.reply("I don't know how to handle that yet. Try /help.")
+#     await message.react([ReactionTypeEmoji(emoji="🔥", type='emoji')], True)

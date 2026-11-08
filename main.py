@@ -18,6 +18,8 @@ async def main():
     bot = Bot(token=os.environ["TOKEN"])
 
     await bot.delete_webhook(drop_pending_updates=True)
+    await bot.send_message(chat_id=os.environ["dev_chat_id"],text="Bot is started.")
+
     await dp.start_polling(bot)
 
 
