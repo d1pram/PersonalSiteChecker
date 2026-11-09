@@ -7,18 +7,20 @@ from aiogram import Bot, Dispatcher
 
 from handlers.commands.basic_handlers import basic_router
 from handlers.commands.create_monitor import create_monitor_form_router
+from handlers.commands.monitors import monitor_router
+
 
 async def main():
     load_dotenv()
     logging.basicConfig(level=logging.INFO)
 
     dp = Dispatcher()
-    dp.include_routers(basic_router, create_monitor_form_router)
+    dp.include_routers(basic_router, create_monitor_form_router, monitor_router)
 
     bot = Bot(token=os.environ["TOKEN"])
 
     await bot.delete_webhook(drop_pending_updates=True)
-    await bot.send_message(chat_id=os.environ["dev_chat_id"],text="Bot is started.")
+    await bot.send_message(chat_id=os.environ["DEV_CHAT_ID"],text="Bot is started.")
 
     await dp.start_polling(bot)
 

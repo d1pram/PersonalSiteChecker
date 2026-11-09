@@ -2,7 +2,8 @@ import asyncio
 import json
 import logging
 from uuid import uuid4
-
+import ssl
+import certifi
 import aiohttp
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
@@ -14,6 +15,11 @@ from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 from keybords import create_url_state_keyboard
 
+from keybords import(
+    create_url_state_keyboard,
+    create_monitor_approval_keyboard,
+)
+
 create_monitor_form_router = Router()
 
 class MonitorStates(StatesGroup):
@@ -21,6 +27,7 @@ class MonitorStates(StatesGroup):
     url = State()
     purpose = State()
 
+    approval = State()
 
 @create_monitor_form_router.message(Command("create_monitor"))
 async def create_monitor_command(message: Message, state: FSMContext) :
@@ -46,10 +53,14 @@ async def process_url(message: Message, state: FSMContext):
         return
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(message.text) as response:
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        connector = aiohttp.TCPConnector(ssl=ssl_context)
+
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.get(url) as response:
                 response.raise_for_status()
-    except (aiohttp.ClientConnectionError, asyncio.TimeoutError, aiohttp.client_exceptions) as err:
+
+    except (aiohttp.ClientError, asyncio.TimeoutError) as err:
         logging.error(err)
         await message.reply("Something went wrong :( Try again.")
         return
@@ -85,19 +96,43 @@ def save_monitor(name, url, purpose, user_id):
 @create_monitor_form_router.callback_query(MonitorStates.purpose)
 async def page_changes(query: CallbackQuery, state: FSMContext):
     await state.update_data(purpose=query.data)
+    await state.set_state(MonitorStates.approval)
 
-    if query.data == "number_check":
-        await query.answer(show_alert=True, text="Number check mode is set.\nTo see more details do «/help Number check»")
-    elif query.data == "page_changes":
-        await query.answer(show_alert=True, text="Changes in page mode is set.\nTo see more details do «/help Changes in page»")
-
-
-    await query.message.edit_text(f"Changes in page mode is set to {query.data}\n"
-                                  f"Now your monitor is ready to go! Check your monitors on /monitors")
-
-
-    # Should create a Monitor object and store it somehow
-    # The idea is to store it as JSON, giving each user it's monitors
     data = await state.get_data()
-    save_monitor(data['name'],data['url'], data['purpose'], user_id=query.from_user.id)
+
+    await query.message.edit_text(
+        f"Review monitor:\n"
+        f"Name: {data['name']}\n"
+        f"URL: {data['url']}\n"
+        f"Mode: {data['purpose']}\n\n"
+        f"Create this monitor?",
+        reply_markup=create_monitor_approval_keyboard(),
+    )
+    await query.answer()
+
+@create_monitor_form_router.callback_query(
+    MonitorStates.approval,
+    F.data == "monitor:approve",
+)
+async def approve_monitor(query: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+
+    save_monitor(
+        data["name"],
+        data["url"],
+        data["purpose"],
+        user_id=query.from_user.id,
+    )
+
+    await query.message.edit_text("Monitor created!")
     await state.clear()
+    await query.answer()
+
+@create_monitor_form_router.callback_query(
+    MonitorStates.approval,
+    F.data == "monitor:cancel",
+)
+async def cancel_monitor(query: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await query.message.edit_text("Monitor creation cancelled.")
+    await query.answer()

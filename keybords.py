@@ -12,3 +12,19 @@ def create_url_state_keyboard(url: str):
         )
 
     return url_state_keyboard.as_markup()
+
+def create_monitor_approval_keyboard():
+    keyboard = InlineKeyboardBuilder()
+
+    keyboard.row(
+        InlineKeyboardButton(
+            text="Confirm",
+            callback_data="monitor:approve",
+        ),
+        InlineKeyboardButton(
+            text="Cancel",
+            callback_data="monitor:cancel",
+        ),
+    )
+
+    return keyboard.as_markup()
