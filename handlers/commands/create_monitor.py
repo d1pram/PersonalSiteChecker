@@ -13,7 +13,7 @@ from aiogram.filters import Command
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 
-from keybords import create_url_state_keyboard
+from keybords import create_url_state_keyboard, MONITORING_MODES
 
 from keybords import(
     create_url_state_keyboard,
@@ -26,7 +26,6 @@ class MonitorStates(StatesGroup):
     name = State()
     url = State()
     purpose = State()
-
     approval = State()
 
 @create_monitor_form_router.message(Command("create_monitor"))
@@ -110,10 +109,8 @@ async def page_changes(query: CallbackQuery, state: FSMContext):
     )
     await query.answer()
 
-@create_monitor_form_router.callback_query(
-    MonitorStates.approval,
-    F.data == "monitor:approve",
-)
+
+@create_monitor_form_router.callback_query(MonitorStates.approval, F.data == "monitor:approve")
 async def approve_monitor(query: CallbackQuery, state: FSMContext):
     data = await state.get_data()
 
@@ -128,11 +125,11 @@ async def approve_monitor(query: CallbackQuery, state: FSMContext):
     await state.clear()
     await query.answer()
 
-@create_monitor_form_router.callback_query(
-    MonitorStates.approval,
-    F.data == "monitor:cancel",
-)
+
+@create_monitor_form_router.callback_query(MonitorStates.approval, F.data == "monitor:cancel")
 async def cancel_monitor(query: CallbackQuery, state: FSMContext):
     await state.clear()
     await query.message.edit_text("Monitor creation cancelled.")
     await query.answer()
+
+

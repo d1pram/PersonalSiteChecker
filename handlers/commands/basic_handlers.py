@@ -1,7 +1,7 @@
 from aiogram import Dispatcher, Router, F, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, ReplyKeyboardRemove, ReactionTypeEmoji, MessageReactionUpdated
-import parser
+
 
 
 basic_router = Router()

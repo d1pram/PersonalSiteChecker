@@ -1,8 +1,9 @@
 import asyncio
 import os
 import logging
+
+from aiogram.types import BotCommandScopeAllPrivateChats
 from dotenv import load_dotenv
-from aiogram.types import BotCommand
 from aiogram import Bot, Dispatcher
 
 from handlers.commands.basic_handlers import basic_router
@@ -18,6 +19,9 @@ async def main():
     dp.include_routers(basic_router, create_monitor_form_router, monitor_router)
 
     bot = Bot(token=os.environ["TOKEN"])
+
+    # Deleted list of commands that is for private chats, in order to use default command scope
+    # await bot.delete_my_commands(scope=BotCommandScopeAllPrivateChats())
 
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.send_message(chat_id=os.environ["DEV_CHAT_ID"],text="Bot is started.")
