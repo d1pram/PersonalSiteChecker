@@ -1,17 +1,24 @@
-from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
+from aiogram.types import DisabledButton, InlineKeyboardButton
 
+PAGE_SIZE = 3
+MONITORING_MODES = {"Number check": "number_check", "Changes in page" : "page_changes", "Text change": "text_change"}
 
 def create_url_state_keyboard(url: str):
-    url_state_keyboard = InlineKeyboardBuilder().adjust(1,3)
+    url_state_keyboard = InlineKeyboardBuilder()
 
-    url_state_keyboard.row(
-        InlineKeyboardButton(text="Open my page", url=url),
-        InlineKeyboardButton(text="Number check", callback_data="number_check"),
-        InlineKeyboardButton(text="Changes in page", callback_data="page_changes"),
-        )
+    url_state_keyboard.add(InlineKeyboardButton(text="Open my page", url=url))
 
-    return url_state_keyboard.as_markup()
+    for mode in MONITORING_MODES.keys():
+        url_state_keyboard.add(InlineKeyboardButton(text=mode, callback_data=MONITORING_MODES[mode]))
+
+    return url_state_keyboard.adjust(1,3).as_markup()
 
 def create_monitor_approval_keyboard():
     keyboard = InlineKeyboardBuilder()
@@ -28,3 +35,46 @@ def create_monitor_approval_keyboard():
     )
 
     return keyboard.as_markup()
+
+def show_monitors_keyboard(monitors: list[dict], page: int):
+    page_count = max(1, (len(monitors) + PAGE_SIZE - 1) // PAGE_SIZE)
+
+    page = max(0, min(page, page_count - 1))
+
+    start = page * PAGE_SIZE
+    visible_monitors = monitors[start : start + PAGE_SIZE]
+
+    builder = InlineKeyboardBuilder()
+
+    builder.adjust(1)
+    for monitor in visible_monitors:
+        builder.button(text=monitor.get("name"), callback_data=f"monitor:['id']")
+
+    builder.adjust(1)
+
+    # When pages < 4 no arrows and dynamic changes of buttons
+    if page == 0:
+        left_button = InlineKeyboardButton(
+            text="←",
+            disabled=DisabledButton(),
+        )
+    else:
+        left_button = InlineKeyboardButton(
+            text="←",
+            callback_data=f"monitors:page:{page - 1}",
+        )
+
+    if page == page_count - 1:
+        right_button = InlineKeyboardButton(
+            text="→",
+            disabled=DisabledButton(),
+        )
+    else:
+        right_button = InlineKeyboardButton(
+            text="→",
+            callback_data=f"monitors:page:{page + 1}",
+        )
+
+    builder.row(left_button, right_button)
+
+    return builder.as_markup(), page, page_count
