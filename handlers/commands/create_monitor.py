@@ -12,9 +12,6 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.filters import Command
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
-
-from keybords import create_url_state_keyboard, MONITORING_MODES
-
 from keybords import(
     create_url_state_keyboard,
     create_monitor_approval_keyboard,
@@ -25,7 +22,7 @@ create_monitor_form_router = Router()
 class MonitorStates(StatesGroup):
     name = State()
     url = State()
-    purpose = State()
+    mode = State()
     approval = State()
 
 @create_monitor_form_router.message(Command("create_monitor"))
@@ -66,18 +63,18 @@ async def process_url(message: Message, state: FSMContext):
 
 
     await state.update_data(url=url)
-    await state.set_state(MonitorStates.purpose)
+    await state.set_state(MonitorStates.mode)
     await message.answer("The URL is good, now tell me what you want to track", reply_markup=create_url_state_keyboard(url))
 
 
-def save_monitor(name, url, purpose, user_id):
+def save_monitor(name, url, mode, user_id):
     user_id = str(user_id)
 
     monitor = {
         "id": uuid4().hex,
         "name": name,
         "url": url,
-        "purpose": purpose,
+        "mode": mode,
     }
 
     try:
@@ -92,9 +89,9 @@ def save_monitor(name, url, purpose, user_id):
     with open("monitors.json", "w", encoding="utf-8") as file:
         json.dump(storage, file, ensure_ascii=False, indent=2)
 
-@create_monitor_form_router.callback_query(MonitorStates.purpose)
+@create_monitor_form_router.callback_query(MonitorStates.mode)
 async def page_changes(query: CallbackQuery, state: FSMContext):
-    await state.update_data(purpose=query.data)
+    await state.update_data(mode=query.data)
     await state.set_state(MonitorStates.approval)
 
     data = await state.get_data()
@@ -103,7 +100,7 @@ async def page_changes(query: CallbackQuery, state: FSMContext):
         f"Review monitor:\n"
         f"Name: {data['name']}\n"
         f"URL: {data['url']}\n"
-        f"Mode: {data['purpose']}\n\n"
+        f"Mode: {data['mode']}\n\n"
         f"Create this monitor?",
         reply_markup=create_monitor_approval_keyboard(),
     )
@@ -117,7 +114,7 @@ async def approve_monitor(query: CallbackQuery, state: FSMContext):
     save_monitor(
         data["name"],
         data["url"],
-        data["purpose"],
+        data["mode"],
         user_id=query.from_user.id,
     )
 
@@ -131,5 +128,3 @@ async def cancel_monitor(query: CallbackQuery, state: FSMContext):
     await state.clear()
     await query.message.edit_text("Monitor creation cancelled.")
     await query.answer()
-
-
