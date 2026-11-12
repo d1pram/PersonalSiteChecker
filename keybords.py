@@ -78,3 +78,6 @@ def show_monitors_keyboard(monitors: list[dict], page: int):
     builder.row(left_button, right_button)
 
     return builder.as_markup(), page, page_count
+
+
+#Create keyboard for when entering monitoring mode to be able to go back and change it
