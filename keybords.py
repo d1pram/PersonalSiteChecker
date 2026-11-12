@@ -7,7 +7,7 @@ from aiogram.types import (
 )
 from aiogram.types import DisabledButton, InlineKeyboardButton
 
-PAGE_SIZE = 3
+PAGE_SIZE = 4
 MONITORING_MODES = {"Number check": "number_check", "Changes in page" : "page_changes", "Text change": "text_change"}
 
 def create_url_state_keyboard(url: str):
@@ -46,35 +46,57 @@ def show_monitors_keyboard(monitors: list[dict], page: int):
 
     builder = InlineKeyboardBuilder()
 
-    builder.adjust(1)
     for monitor in visible_monitors:
-        builder.button(text=monitor.get("name"), callback_data=f"monitor:['id']")
-
-    builder.adjust(1)
-
-    # When pages < 4 no arrows and dynamic changes of buttons
-    if page == 0:
-        left_button = InlineKeyboardButton(
-            text="←",
-            disabled=DisabledButton(),
+        builder.button(
+            text=monitor.get("name"),
+            callback_data=f"monitor:{monitor['id']}",
         )
-    else:
-        left_button = InlineKeyboardButton(
-            text="←",
-            callback_data=f"monitors:page:{page - 1}",
-        )
+    layouts = {1: (1,), 2: (2,), 3: (2,1), 4: (2,2),}
 
-    if page == page_count - 1:
-        right_button = InlineKeyboardButton(
-            text="→",
-            disabled=DisabledButton(),
-        )
-    else:
-        right_button = InlineKeyboardButton(
-            text="→",
-            callback_data=f"monitors:page:{page + 1}",
+    if visible_monitors:
+        builder.adjust(*layouts[len(visible_monitors)])
+
+    navigation = [] #collect only available arrows
+
+    if page > 0:
+        navigation.append(
+            InlineKeyboardButton(
+                text="←",
+                callback_data=f"monitors:page:{page - 1}",
+            )
         )
 
-    builder.row(left_button, right_button)
+    if page < page_count - 1:
+        navigation.append(
+            InlineKeyboardButton(
+                text="→",
+                callback_data=f"monitors:page:{page + 1}",
+            )
+        )
+
+
+    if navigation:
+        builder.row(*navigation)
 
     return builder.as_markup(), page, page_count
+
+
+def delete_monitors_keyboard(monitors: list[dict]):
+    builder = InlineKeyboardBuilder()
+
+    for monitor in monitors:
+        builder.button(
+            text=f"🗑{monitor.get('name')}",
+            callback_data=f"delete:{monitor['id']}",
+        )
+    builder.adjust(1)
+
+    if monitors:
+        builder.row(
+            InlineKeyboardButton(
+                text="Delete all",
+                callback_data="delete:all",
+            )
+        )
+
+    return builder.as_markup()
