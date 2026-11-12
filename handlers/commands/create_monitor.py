@@ -7,23 +7,15 @@ import certifi
 import aiohttp
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
-
 from aiogram.filters import Command
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
-
+from handlers.states import MonitorStates
 from keybords import(
     create_url_state_keyboard,
     create_monitor_approval_keyboard,
 )
 
 create_monitor_form_router = Router()
-
-class MonitorStates(StatesGroup):
-    name = State()
-    url = State()
-    mode = State()
-    approval = State()
 
 @create_monitor_form_router.message(Command("create_monitor"))
 async def create_monitor_command(message: Message, state: FSMContext) :
@@ -89,10 +81,19 @@ def save_monitor(name, url, mode, user_id):
     with open("monitors.json", "w", encoding="utf-8") as file:
         json.dump(storage, file, ensure_ascii=False, indent=2)
 
+'''
+#################
 @create_monitor_form_router.callback_query(MonitorStates.mode)
 async def page_changes(query: CallbackQuery, state: FSMContext):
     await state.update_data(mode=query.data)
     await state.set_state(MonitorStates.approval)
+
+    # match query.data:
+    #     case "text_change":
+    #         text_change.monitoring(user_id=query.from_user.id)
+        # case "number_check":
+            # number_check.monitoring()
+
 
     data = await state.get_data()
 
@@ -105,7 +106,8 @@ async def page_changes(query: CallbackQuery, state: FSMContext):
         reply_markup=create_monitor_approval_keyboard(),
     )
     await query.answer()
-
+##################
+'''
 
 @create_monitor_form_router.callback_query(MonitorStates.approval, F.data == "monitor:approve")
 async def approve_monitor(query: CallbackQuery, state: FSMContext):
