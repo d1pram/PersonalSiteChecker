@@ -7,7 +7,7 @@ from aiogram import Bot, Dispatcher
 from handlers.commands.basic_handlers import basic_router
 from handlers.commands.create_monitor import create_monitor_form_router
 from handlers.commands.monitors import monitor_router
-from handlers.monitoring_modes.text_change import text_change_route
+from handlers.monitoring_modes.text_change import text_change_router
 
 
 async def main():
@@ -15,7 +15,7 @@ async def main():
     logging.basicConfig(level=logging.INFO)
 
     dp = Dispatcher()
-    dp.include_routers(basic_router, create_monitor_form_router, monitor_router, text_change_route)
+    dp.include_routers(basic_router, create_monitor_form_router, monitor_router, text_change_router)
 
     bot = Bot(token=os.environ["TOKEN"])
 
