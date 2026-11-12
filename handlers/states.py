@@ -1,8 +1,9 @@
 from aiogram.fsm.state import StatesGroup, State
 
 
-class MonitoringStates(StatesGroup):
+class MonitoringTextStates(StatesGroup):
     target = State()
+    choose_text = State()
     interval = State()
 
 

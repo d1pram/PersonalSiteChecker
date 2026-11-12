@@ -1,11 +1,7 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
 from aiogram.types import DisabledButton, InlineKeyboardButton
+
+from text import number_emojis
 
 PAGE_SIZE = 3
 MONITORING_MODES = {"Number check": "number_check", "Changes in page" : "page_changes", "Text change": "text_change"}
@@ -79,5 +75,15 @@ def show_monitors_keyboard(monitors: list[dict], page: int):
 
     return builder.as_markup(), page, page_count
 
+def choose_one_text(number_of_buttons):
+    builder = InlineKeyboardBuilder()
+
+    for i in range(number_of_buttons):
+        builder.button(text=f"{number_emojis[i+1]}", callback_data=f"choose_text:{i}")
+
+    builder.adjust(3)
+
+    builder.button(text="🔙 Choose another text", callback_data="choose_text:another")
+    return builder.as_markup()
 
 #Create keyboard for when entering monitoring mode to be able to go back and change it
