@@ -13,9 +13,7 @@ from aiogram.filters import Command
 from aiogram.types import Message, ReplyKeyboardRemove, CallbackQuery
 
 
-from keybords import create_url_state_keyboard
-
-from keybords import(
+from keyboard import(
     create_url_state_keyboard,
     create_monitor_approval_keyboard,
 )
@@ -33,7 +31,7 @@ class MonitorStates(StatesGroup):
 async def create_monitor_command(message: Message, state: FSMContext) :
     await state.set_state(MonitorStates.name)
     await message.answer(
-        "Hi there! So how should this monitor be called?",
+        "Let's start! So how should this monitor be called?",
         reply_markup=ReplyKeyboardRemove(),
     )
 

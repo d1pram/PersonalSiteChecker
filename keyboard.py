@@ -80,15 +80,15 @@ def show_monitors_keyboard(monitors: list[dict], page: int):
 
     return builder.as_markup(), page, page_count
 
-
 def delete_monitors_keyboard(monitors: list[dict]):
     builder = InlineKeyboardBuilder()
 
     for monitor in monitors:
         builder.button(
-            text=f"🗑{monitor.get('name')}",
+            text=f"🗑 {monitor.get('name') or 'Without name'}",
             callback_data=f"delete:{monitor['id']}",
         )
+
     builder.adjust(1)
 
     if monitors:
@@ -99,4 +99,12 @@ def delete_monitors_keyboard(monitors: list[dict]):
             )
         )
 
+    builder.row(
+        InlineKeyboardButton(
+            text="← Back to monitors",
+            callback_data="monitors:show",
+        )
+    )
+
     return builder.as_markup()
+

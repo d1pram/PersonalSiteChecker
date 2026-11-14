@@ -4,14 +4,12 @@ from pathlib import Path
 
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import (
-    CallbackQuery,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Message,
-)
+from aiogram.types import CallbackQuery, Message
 
-from keybords import show_monitors_keyboard, delete_monitors_keyboard
+from keyboard import (
+    delete_monitors_keyboard,
+    show_monitors_keyboard,
+)
 
 monitor_router = Router()
 
@@ -104,16 +102,28 @@ async def delete_callback(callback: CallbackQuery):
 
     if target == "all":
         text = f"Deleted {deleted_count} monitor(s)."
+        keyboard = delete_monitors_keyboard([])
     elif deleted_count:
         text = "Monitor deleted. Choose another:"
+        keyboard = delete_monitors_keyboard(monitors) if monitors else None
     else:
         text = "Monitor not found."
-
-    keyboard = (
-        delete_monitors_keyboard(monitors)
-        if monitors and target != "all"
-        else None
-    )
+        keyboard = delete_monitors_keyboard(monitors) if monitors else None
 
     await callback.message.edit_text(text, reply_markup=keyboard)
+    await callback.answer()
+
+@monitor_router.callback_query(F.data == "monitors:show")
+async def back_to_monitors(callback: CallbackQuery):
+    monitors = load_monitors(callback.from_user.id)
+
+    if not monitors:
+        await callback.message.edit_text("No monitors yet")
+    else:
+        keyboard, page, page_count = show_monitors_keyboard(monitors, 0)
+        await callback.message.edit_text(
+            f"Your monitors - page {page + 1}/{page_count}",
+            reply_markup=keyboard,
+        )
+
     await callback.answer()
