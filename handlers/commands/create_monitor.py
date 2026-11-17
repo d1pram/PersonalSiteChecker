@@ -111,13 +111,14 @@ async def page_changes(query: CallbackQuery, state: FSMContext):
 
 @create_monitor_form_router.callback_query(MonitorStates.approval, F.data == "monitor:approve")
 async def approve_monitor(query: CallbackQuery, state: FSMContext):
+    await state.update_data(user_id=query.from_user.id)
     data = await state.get_data()
 
     save_monitor(
         data["name"],
         data["url"],
         data["mode"],
-        user_id=query.from_user.id,
+        data["user_id"], # Did it so the FSM would remember the name
     )
 
     await query.message.edit_text("Monitor created!")
